@@ -72,7 +72,7 @@
       background-color: #b7b9a2;
       color: white;
     }
-    
+
     .dropbtn {
       background-color: #15390f;
       color: white;
@@ -109,8 +109,8 @@
     const margin = { top: 10, right: 210, bottom: 50, left: 50 };
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
-    const colorPool = ['#a68069', '#fa654a', '#e9bb65', '#78add6', '#34704f', '#5268b8']
-    const contiMap = { 'Africa': '#a68069', 'Asia': '#fa654a', 'Europe': '#e9bb65', 'North America': '#78add6', 'Oceania': '#34704f', 'South America': '#5268b8' }
+    const colorPool = ['#a68069', '#fa654a', '#34704f', '#78add6', '#e9bb65', '#5268b8']
+    const contiMap = { 'Africa': '#a68069', 'Asia': '#fa654a', 'Europe': '#34704f', 'North America': '#78add6', 'Oceania': '#e9bb65', 'South America': '#5268b8' }
 
     let annotations = svg.append("g").attr("id", "annotations");
     let chartArea = svg.append("g").attr("id", "points")
@@ -269,7 +269,8 @@
             .attr("stroke", "black")
             .attr("stroke-width", 3)
             .attr("r", popuScale(data['population']) + 2)
-            .attr("fill", lighten(contiMap[d['continent']]));
+            .attr("fill", lighten(contiMap[d['continent']]))
+            .over();
           continents.forEach(c => {
             if (c != data['continent']) {
               d3.select(`text.${c.split(' ')[0]}`)
@@ -304,7 +305,7 @@
   <!-- ----------------------------------------------- -->
   <!-- Diagram 2 -->
 
-<h2> World Food Price Choropleth Map, 2017 </h2>
+  <h2> World Food Price Choropleth Map, 2017 </h2>
   <p id="P2">
   <div id="dropdown1">Select Diet: </div> <br>
   <div id="dropdown2">Select Affordability Metric: </div>
@@ -330,10 +331,10 @@
       // adjust data to ingest, target metric, and color range
       fp = await d3.csv(diet + " " + metric + ".csv" + "?t=${Date.now()}");
       target = 'target';
-      colorRange = ["#ede4d3", "#b7b9a2", "#818f71", "#4b6440", "#15390f"] 
+      colorRange = ["#ede4d3", "#b7b9a2", "#818f71", "#4b6440", "#15390f"]
       //subset the data based on selected yearKey
       yearData = fp;
-      if (metric == "Number that cannot afford (log)") { yearData.forEach(function (d) { if (d.target != 0) { d.target = Math.log(d.target) } });};
+      if (metric == "Number that cannot afford (log)") { yearData.forEach(function (d) { if (d.target != 0) { d.target = Math.log(d.target) } }); };
 
 
       //access the metric from a separate dataset and add it as one attribute of each datum to the topojson.
@@ -346,7 +347,7 @@
         }
 
       });
-      
+
       // assign the respective food price to country if the value is not NaN, otherwise assign 'N/A'
       data.objects.countries.geometries.forEach(function (d) { d.properties.rate = rateByCountry[d.properties.name] || "N/A" });
 
