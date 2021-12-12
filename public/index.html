@@ -65,11 +65,11 @@
     #button-bar button {
       background-color: white;
       color: black;
-      border: 2px solid #f6c6bb;
+      border: 2px solid #b7b9a2;
     }
 
     #button-bar button:hover {
-      background-color: #f6c6bb;
+      background-color: #b7b9a2;
       color: white;
     }
   </style>
@@ -101,6 +101,7 @@
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
     const colorPool = ['#a68069', '#fa654a', '#e9bb65', '#78add6', '#34704f', '#5268b8']
+    const contiMap = { 'Africa': '#a68069', 'Asia': '#fa654a', 'Europe': '#e9bb65', 'North America': '#78add6', 'Oceania': '#34704f', 'South America': '#5268b8' }
 
     let annotations = svg.append("g").attr("id", "annotations");
     let chartArea = svg.append("g").attr("id", "points")
@@ -246,7 +247,7 @@
           .attr("cx", d => gdpScale(d['gdp']))
           .attr("cy", d => shareScale(d['share']))
           .attr("r", d => popuScale(d['population']))
-          .style("fill", d => contiScale(d['continent']))
+          .style("fill", d => contiMap[d['continent']])
           .attr("opacity", 0.8);
 
         // Add mouseover
@@ -259,7 +260,7 @@
             .attr("stroke", "black")
             .attr("stroke-width", 3)
             .attr("r", popuScale(data['population']) + 2)
-            .attr("fill", lighten(contiScale(data['continent'])));
+            .attr("fill", lighten(contiMap[d['continent']]));
           continents.forEach(c => {
             if (c != data['continent']) {
               d3.select(`text.${c.split(' ')[0]}`)
@@ -276,7 +277,7 @@
             .transition().duration(200)
             .attr("stroke-width", 0)
             .attr("r", popuScale(data['population']))
-            .attr("fill", contiScale(data['continent']));
+            .attr("fill", contiMap[data['continent']]);
           d3.selectAll("text#legend")
             .attr("opacity", "1");
         });
@@ -659,7 +660,7 @@
               enter
                 .append("rect")
                 .attr("class", "bar")
-                .attr("fill", "#f6c6bb")
+                .attr("fill", "#b7b9a2")
                 .attr("stroke", "black")
                 .attr("stroke-width", 1)
                 .attr("x", (d) => itemScale(d["item"]) + 50)
@@ -672,7 +673,7 @@
               update.call((update) =>
                 update
                   .transition()
-                  .attr("fill", "#f6c6bb")
+                  .attr("fill", "#b7b9a2")
                   .attr("stroke", "black")
                   .attr("stroke-width", 1)
                   .attr("x", (d) => itemScale(d["item"]) + 50)
