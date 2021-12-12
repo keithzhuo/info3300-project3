@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Project 3</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/topojson.v3.min.js"></script>
+  <style>
+    #label {
+      font-size: 1em;
+      -webkit-text-fill-color: white;
+    }
+
+    .gridlines line {
+      stroke: #bbb;
+    }
+
+    .gridlines .domain {
+      stroke: none;
+    }
+
+    .mouseover rect {
+      fill: white;
+      stroke: #222;
+      stroke-width: 1px;
+    }
+
+    .mouseover text {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+    }
+
+    .mouseover text:first-child {
+      font-weight: bold;
+    }
+
+    rect.legend {
+      fill: white;
+      stroke: #222;
+      stroke-width: 1px;
+    }
+
+    text#legend {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Project 3</h1>
+  <h3>Name</h3>
+  Juran Li, Kefan Lu, Chuhan Yu, Hao Zhuo<br />
+
+
+  <!-- Diagram 1 -->
+  <p>
+  <h2>Share of consumer expenditure spent on food vs. GDP per capita, 2016</h2>
+  </p>
+  <p>
+    <svg id="scatterplot" width="800" height="400">
+      <text id="label" x="590" y="5" text-anchor="end" alignment-baseline="hanging"></text>
+    </svg>
+  </p>
+
+  <script id="plot_1">
+
+    // Set-up
+    const svg = d3.select("svg#scatterplot");
+    const width = svg.attr("width");
+    const height = svg.attr("height");
+    const margin = { top: 10, right: 210, bottom: 50, left: 50 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+    const colorPool = ['#a68069', '#fa654a', '#e9bb65', '#78add6', '#34704f', '#5268b8']
+
+    let annotations = svg.append("g").attr("id", "annotations");
+    let chartArea = svg.append("g").attr("id", "points")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Add legend
+    let legend = svg.append("rect")
+      .attr("class", "legend")
+      .attr("transform", `translate(${margin.left + 15},${margin.top + 5})`)
+      .attr("x", 530).attr("y", 0)
+      .attr("rx", 5).attr("ry", 5)
+      .attr("height", 110)
+      .attr("width", 110);
+
+    let continents = ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America']
+    continents.forEach((d, i) => {
+      svg.append("rect")
+        .attr("class", "legendcolor")
+        .attr("transform", `translate(${margin.left + 15},${margin.top + 5})`)
+        .attr("x", 535).attr("y", 10 + i * 16)
+        .attr("width", 10)
+        .attr("height", 10)
+        .style("fill", colorPool[i]);
+      svg.append("text")
+        .attr("id", "legend")
+        .attr("class", continents[i].split(' ')[0])
+        .attr("transform", `translate(${margin.left + 15},${margin.top + 5})`)
+        .attr("x", 555).attr("y", 20 + i * 16)
+        .text(d)
+    });
+
+
+    // Set mouseover
+    const mouseover = svg.append("g").attr("class", "mouseover")
+      .attr("transform", `translate(${margin.left + 15},${margin.top + 5})`);
+
+    // Calculate the length of a string
+    function stringLen(str) {
+      const dummytext = mouseover.append("text").attr("class", "legendtext").attr("visibility", "hidden");
+      dummytext.text(str)
+      let len = dummytext.node().getComputedTextLength()
+      dummytext.remove()
+      return len;
+    }
+
+    const frame = mouseover.append("rect").attr("class", "frame")
+      .attr("x", 300).attr("y", 0)
+      .attr("rx", 5).attr("ry", 5)
+      .attr("height", 110);
+    const textbox = mouseover.append("g").attr("transform", "translate(10,10)");
+    const format = d3.format(',d');
+    // Set updateMouseover
+    function updateMouseover(d) {
+      // Empty out
+      textbox.html('');
+      let country = `Country: ${d['country']}`;
+      let conti = `Continent: ${d['continent']}`;
+      let share = `Share spent on food: ${d['share']}%`;
+      let gdp = `GDP per capita: ${Math.floor(d['gdp'])}k/$`;
+      let popu = `2016 population (est): ${format(d['population'])}`
+
+      let maxWidth = Math.max(stringLen(country), stringLen(conti), stringLen(share), stringLen(gdp), stringLen(popu));
+      frame.attr("width", maxWidth + 28);
+
+      textbox.append("text").text(country)
+        .attr("x", 300).attr("y", 10);
+      textbox.append("text").text(conti)
+        .attr("x", 300).attr("y", 30);
+      textbox.append("text").text(share)
+        .attr("x", 300).attr("y", 50);
+      textbox.append("text").text(gdp)
+        .attr("x", 300).attr("y", 70);
+      textbox.append("text").text(popu)
+        .attr("x", 300).attr("y", 90);
+    }
+
+    // Import some CSV data
+    d3.csv("shares.csv", d3.autoType)
+      .then((data) => {
+
+        // Check for data issues
+        data.forEach(d => {
+          d['gdp'] = Math.floor(d['gdp']) / 1000;
+        });
+
+        // Scales
+        const gdpExtent = d3.extent(data, d => d['gdp']);
+        const gdpScale = d3.scaleLog().domain(gdpExtent).range([0, chartWidth]);
+        console.log(gdpExtent);
+        const shareExtent = d3.extent(data, d => d['share']);
+        const shareScale = d3.scaleLinear().domain(shareExtent).range([chartHeight, 0]);
+        const popuExtent = d3.extent(data, d => d['population']);
+        const popuScale = d3.scaleLinear().domain(popuExtent).range([5, 15]);
+        const contiScale = d3.scaleOrdinal(colorPool);
+
+        // Y axis
+        let leftAxis = d3.axisLeft(shareScale)
+          .tickFormat(d3.format("~f")).ticks(5);
+        let leftGridlines = d3.axisLeft(shareScale)
+          .tickSize(-chartWidth - 10)
+          .tickFormat("").ticks(5);
+        annotations.append("g")
+          .attr("class", "y axis")
+          .attr("transform", "translate(" + (margin.left - 10) + "," + margin.top + ")")
+          .call(leftAxis)
+        annotations.append("g")
+          .attr("class", "y gridlines")
+          .attr("transform", "translate(" + (margin.left - 10) + "," + margin.top + ")")
+          .call(leftGridlines);
+        annotations.append("text")
+          .attr("class", "y label")
+          .attr("font-size", "12px")
+          .attr("text-anchor", "middle")
+          .attr("transform", `translate(${margin.left + 5},${margin.top + chartHeight / 2}) translate(-45, 0) rotate(-90)`)
+          .style("font-weight", "bold")
+          .text("Share of consumer expenditure on food (%)");
+
+        // X axis
+        let bottomAxis = d3.axisBottom(gdpScale)
+          .tickFormat(d3.format("~f")).ticks(5);
+        let bottomGridlines = d3.axisBottom(gdpScale)
+          .tickSize(-chartHeight - 10)
+          .tickFormat("").ticks(5);
+        annotations.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(" + margin.left + "," + (chartHeight + margin.top + 10) + ")")
+          .call(bottomAxis);
+        annotations.append("g")
+          .attr("class", "x gridlines")
+          .attr("transform", "translate(" + margin.left + "," + (chartHeight + margin.top + 10) + ")")
+          .call(bottomGridlines);
+        annotations.append("text")
+          .attr("class", "x label")
+          .attr("font-size", "12px")
+          .attr("text-anchor", "middle")
+          .attr("transform", `translate(${margin.left + chartWidth / 2},${chartHeight + margin.top + 65})`)
+          .style("font-weight", "bold")
+          .attr("y", -20)
+          .text("GDP per capita (k/$)");
+
+        // Draw circles
+        let circles = chartArea.selectAll("circle").data(data)
+          .join("circle")
+          .attr("cx", d => gdpScale(d['gdp']))
+          .attr("cy", d => shareScale(d['share']))
+          .attr("r", d => popuScale(d['population']))
+          .style("fill", d => contiScale(d['continent']))
+          .attr("opacity", 0.8);
+
+        // Add mouseover
+        circles.on("mouseover", function (d) {
+          mouseover.attr("visibility", "");
+          updateMouseover(d3.select(this).datum())
+          let data = d3.select(this).datum();
+          d3.select(this)
+            .transition().duration(200)
+            .attr("stroke", "black")
+            .attr("stroke-width", 3)
+            .attr("r", popuScale(data['population']) + 2)
+            .attr("fill", lighten(contiScale(data['continent'])));
+          continents.forEach(c => {
+            if (c != data['continent']) {
+              d3.select(`text.${c.split(' ')[0]}`)
+                .attr("opacity", "0.2");
+            }
+          });
+        });
+
+        // Add mouseout
+        circles.on("mouseout", function () {
+          mouseover.attr("visibility", "hidden");
+          let data = d3.select(this).datum();
+          d3.select(this)
+            .transition().duration(200)
+            .attr("stroke-width", 0)
+            .attr("r", popuScale(data['population']))
+            .attr("fill", contiScale(data['continent']));
+          d3.selectAll("text#legend")
+            .attr("opacity", "1");
+        });
+      });
+
+    // Helper funtion: lighten
+    function lighten(color) {
+      let hclColor = d3.hcl(color);
+      let luma = Math.min(130, hclColor.l + 30);
+      return d3.rgb(d3.hcl(hclColor.h, hclColor.c, luma));
+    }
+  </script>
+  </p>
+
+  <!-- Diagram 2 -->
+
+  <h2> World Suicide Choropleth Map </h2>
+
+</body>
+
+</html>
