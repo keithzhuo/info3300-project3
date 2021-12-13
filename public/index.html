@@ -364,7 +364,7 @@
         .join("path")
         .attr("class", "country")
         .attr("d", path)
-        .style("fill", d => { if (d.properties.rate != "N/A") { return colorScale(d.properties.rate) } else { return "##FFFFFF" } }) // return the respective color, if value is n/a then return the white color
+        .style("fill", d => { if (d.properties.rate != "N/A") { return colorScale(d.properties.rate) } else { return "#EBECF0" } }) // return the respective color, if value is n/a then return the white color
         .attr("rate", d => d.properties.rate)
         .attr("name", d => d.properties.name)
         .on('mouseover', mouseEntersPlot)
